@@ -1,10 +1,78 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
+        <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AboElfadl Cyber Sentinel V6.7 - Deep Analysis</title>
     
+    <title>Code Sentinel — فحص الكود المصدري والتحليل الأمني للمواقع</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <link rel="canonical" href="https://code-sentinel.netlify.app/">
+    <link rel="alternate" href="https://code-sentinel.netlify.app/" hreflang="ar">
+
+    <meta property="og:site_name" content="Code Sentinel" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ar_AR" />
+    <meta property="og:title" content="Code Sentinel — فحص الكود المصدري للمواقع 🛡️ | Mahmoud AboElfadl">
+    <meta property="og:description" content="أداة Code Sentinel الاحترافية: افحص الكود المصدري (Source Code) لأي موقع عبر الرابط فقط. تحليل HTML وهيكلية المواقع لأغراض التطوير والبحث الأمني. تطوير: محمود أبو الفضل.">
+    <meta property="og:url" content="https://code-sentinel.netlify.app/" />
+    <meta property="og:image" content="https://code-sentinel.netlify.app/p.png" />
+    <meta property="og:image:alt" content="شعار أداة Code Sentinel لفحص المواقع" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Code Sentinel — فحص وتحليل كود المواقع 💻" />
+    <meta name="twitter:description" content="أداة متقدمة لاستخراج وعرض الكود المصدري للمواقع عبر الرابط. حلول ذكية للمطورين والباحثين الأمنيين. Developed by AboElfadl.">
+    <meta name="twitter:image" content="https://code-sentinel.netlify.app/p.png" />
+    <meta name="twitter:image:alt" content="Code Sentinel - Source Code Inspector" />
+
+    <meta name="telegram:channel" content="@aboelfadl" />
+    <meta name="telegram:title" content="Code Sentinel 🛡️" />
+    <meta name="telegram:description" content="افحص الكود المصدري لأي موقع فوراً. أداة للمطورين من تطوير محمود أبو الفضل." />
+    <meta name="telegram:image" content="https://code-sentinel.netlify.app/p.png" />
+
+    <meta name="description" content="Code Sentinel: أداة مجانية واحترافية لعرض وفحص الكود المصدري (Source Code) لأي موقع إلكتروني باستخدام الرابط. مثالية للمطورين، وخبراء الأمن السيبراني، ومحبي التعلم.">
+    <meta name="keywords" content="Code Sentinel, فحص الكود المصدري, View Source Code, HTML Viewer, تحليل المواقع, الأمن السيبراني, Mahmoud AboElfadl, محمود أبو الفضل, أدوات مطورين, Web Inspector">
+    <meta name="author" content="Mahmoud AboElfadl">
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#000000" />
+
+    <link rel="icon" href="https://code-sentinel.netlify.app/p.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://code-sentinel.netlify.app/p.png">
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Code Sentinel",
+      "url": "https://code-sentinel.netlify.app/",
+      "description": "أداة Code Sentinel الاحترافية لفحص الكود المصدري للمواقع وتحليل بنيتها البرمجية.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "All",
+      "author": {
+        "@type": "Person",
+        "name": "Mahmoud AboElfadl",
+        "url": "https://mahmoud-ab0-elfadl.netlify.app/"
+      },
+      "image": "https://code-sentinel.netlify.app/p.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+ 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -116,7 +184,7 @@
                     <i class="fas fa-user-secret text-blue-500 text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-black tracking-tight text-white leading-none">ABOELFADL <span class="text-blue-500">SENTINEL</span></h1>
+                    <h1 class="text-xl font-black tracking-tight text-white leading-none">CODE <span class="text-blue-500">SENTINEL</span></h1>
                     <p class="text-[10px] text-slate-400 font-mono tracking-wider">V6.7 DEEP SCAN</p>
                 </div>
             </div>
