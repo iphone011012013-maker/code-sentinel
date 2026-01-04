@@ -80,390 +80,719 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        c_bg: "#121212",
-                        c_panel: "#1e1e1e",
-                        c_accent: "#00e676", // نيون أخضر
-                        c_danger: "#ff1744", // نيون أحمر
-                        c_info: "#2979ff",   // أزرق
-                        c_text: "#eeeeee"
-                    },
-                    fontFamily: {
-                        cairo: ['Cairo', 'sans-serif'],
-                        code: ['Fira Code', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #121212; color: #eee; }
-        .neon-border { box-shadow: 0 0 5px #00e676, 0 0 10px #00e676; }
-        .neon-text { text-shadow: 0 0 5px #00e676; }
-        .danger-text { text-shadow: 0 0 5px #ff1744; }
-        
+        :root {
+            --primary: #3b82f6;
+            --accent: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #020617;
+            background-image: 
+                linear-gradient(rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95)),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231e293b' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .mono-font { font-family: 'JetBrains Mono', monospace; direction: ltr; text-align: left; }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e1e1e; }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #00e676; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        .tab-btn.active {
-            background-color: #2979ff;
-            color: white;
-            border-bottom: 2px solid #fff;
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
+        .tab-btn { transition: all 0.3s ease; }
+        .tab-btn.active {
+            background-color: rgba(59, 130, 246, 0.15);
+            border-bottom: 2px solid #3b82f6;
+            color: #60a5fa;
+        }
+
+        .code-preview {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #0b1120;
+            border-radius: 0.5rem;
+            border: 1px solid #1e293b;
+        }
+
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-right: 4px solid #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .toast.error { border-color: #ef4444; }
+        .toast.success { border-color: #22c55e; }
         
-        /* Code Syntax Highlighting Simulation */
-        .code-highlight {
-            background-color: #222;
-            color: #00e676;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.9em;
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Modal Animation */
+        .modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
     <!-- Header -->
-    <header class="bg-c_panel border-b border-gray-800 p-6 text-center shadow-lg relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-c_danger via-c_info to-c_accent"></div>
-        <h1 class="text-3xl md:text-4xl font-bold text-c_accent neon-text mb-2">
-            <i class="fas fa-shield-halved ml-2"></i> ABO-ELFADL SECURITY SUITE
-        </h1>
-        <p class="text-gray-400 text-sm md:text-base">Advanced Malware Analysis & Safe Preview | Web Edition v1.0</p>
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center border border-blue-500/30">
+                    <i class="fas fa-user-secret text-blue-500 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white leading-none">CODE <span class="text-blue-500">SENTINEL</span></h1>
+                    <p class="text-[10px] text-slate-400 font-mono tracking-wider">V6.7 DEEP SCAN</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="exportReport('png')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-700 transition-colors flex items-center gap-2">
+                    <i class="fas fa-image"></i> صورة
+                </button>
+                <button onclick="exportReport('pdf')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-700 transition-colors flex items-center gap-2">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+            </div>
+        </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8">
-        
+    <main class="container mx-auto px-4 py-8 flex-grow">
+
         <!-- Input Section -->
-        <section class="bg-c_panel rounded-xl p-6 mb-8 shadow-xl border border-gray-800">
-            <div class="flex flex-col md:flex-row gap-4 items-center">
-                <!-- Toggle Input Method -->
-                <div class="flex bg-black rounded-lg p-1">
-                    <button onclick="toggleInputMode('url')" id="btn-mode-url" class="px-4 py-2 rounded text-sm font-bold bg-c_info text-white transition">رابط URL</button>
-                    <button onclick="toggleInputMode('code')" id="btn-mode-code" class="px-4 py-2 rounded text-sm font-bold text-gray-400 hover:text-white transition">كود المصدر</button>
-                </div>
-
-                <!-- URL Input -->
-                <div id="input-url-container" class="flex-grow w-full">
-                    <div class="relative">
-                        <i class="fas fa-globe absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-                        <input type="text" id="urlInput" placeholder="أدخل رابط الموقع (مثال: example.com)..." 
-                            class="w-full bg-[#2c2c2c] text-c_accent border-none rounded-lg py-3 pr-10 pl-4 font-code focus:ring-2 focus:ring-c_accent outline-none transition">
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1 mr-1">* نستخدم Proxy لتجاوز CORS، قد لا تعمل بعض المواقع الكبيرة.</p>
-                </div>
-
-                <!-- Code Input (Hidden by default) -->
-                <div id="input-code-container" class="flex-grow w-full hidden">
-                    <textarea id="codeInput" placeholder="الصق كود HTML هنا مباشرة للفحص الدقيق..." 
-                        class="w-full bg-[#2c2c2c] text-c_accent border-none rounded-lg py-3 px-4 font-code h-24 focus:ring-2 focus:ring-c_accent outline-none transition resize-none"></textarea>
-                </div>
-
-                <!-- Scan Button -->
-                <button onclick="startProcess()" id="scanBtn" class="w-full md:w-auto bg-c_danger hover:bg-red-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform hover:scale-105 transition flex items-center justify-center gap-2">
-                    <i class="fas fa-search"></i> فحص ومعاينة
-                </button>
-            </div>
-        </section>
-
-        <!-- Results Section -->
-        <section id="resultsArea" class="hidden">
-            <!-- Tabs Navigation -->
-            <div class="flex border-b border-gray-700 mb-0">
-                <button onclick="switchTab('scan')" id="tab-scan" class="tab-btn active px-6 py-3 font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
-                    <i class="fas fa-bug"></i> تقرير الفيروسات
-                </button>
-                <button onclick="switchTab('preview')" id="tab-preview" class="tab-btn px-6 py-3 font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
-                    <i class="fas fa-eye"></i> المعاينة الآمنة
-                </button>
-                <button onclick="switchTab('source')" id="tab-source" class="tab-btn px-6 py-3 font-bold text-gray-400 hover:text-white transition flex items-center gap-2">
-                    <i class="fas fa-code"></i> الكود المصدري
-                </button>
-            </div>
-
-            <!-- Tab Contents -->
-            <div class="bg-c_panel rounded-b-xl min-h-[400px] shadow-2xl relative">
+        <div class="max-w-5xl mx-auto mb-8">
+            <div class="glass-panel rounded-2xl border border-blue-500/20 overflow-hidden">
                 
-                <!-- 1. Scan Report -->
-                <div id="content-scan" class="p-6 h-full">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold text-gray-300">سجل الفحص الأمني</h3>
-                        <div id="risk-badge" class="hidden px-4 py-1 rounded-full text-sm font-bold"></div>
-                    </div>
-                    <div id="report-output" class="bg-black rounded-lg p-4 font-code text-sm overflow-y-auto max-h-[500px] border border-gray-800 leading-relaxed">
-                        <!-- Report generated here -->
-                    </div>
+                <!-- Tabs Header -->
+                <div class="flex border-b border-slate-700/50 bg-slate-900/50">
+                    <button onclick="switchTab('url')" id="tab-url" class="tab-btn active flex-1 py-4 text-sm font-bold border-b-2 border-transparent hover:bg-slate-800/50 flex justify-center items-center gap-2">
+                        <i class="fas fa-globe"></i> فحص رابط (URL)
+                    </button>
+                    <button onclick="switchTab('upload')" id="tab-upload" class="tab-btn flex-1 py-4 text-sm font-bold border-b-2 border-transparent hover:bg-slate-800/50 flex justify-center items-center gap-2">
+                        <i class="fas fa-file-upload"></i> رفع ملف (Upload)
+                    </button>
+                    <button onclick="switchTab('paste')" id="tab-paste" class="tab-btn flex-1 py-4 text-sm font-bold border-b-2 border-transparent hover:bg-slate-800/50 flex justify-center items-center gap-2">
+                        <i class="fas fa-code"></i> لصق كود (Code)
+                    </button>
                 </div>
 
-                <!-- 2. Safe Preview -->
-                <div id="content-preview" class="hidden h-full">
-                    <div class="bg-gray-900 text-xs text-c_info p-2 border-b border-gray-700 flex justify-between">
-                        <span id="preview-meta">بيانات الصفحة: جاري التحميل...</span>
-                        <span><i class="fas fa-shield-alt text-c_accent"></i> وضع الحماية مفعل (No JS/Iframes)</span>
+                <!-- Tab Contents -->
+                <div class="p-6 min-h-[180px] flex flex-col justify-center">
+                    
+                    <!-- 1. URL Section -->
+                    <div id="section-url" class="tab-content block animate-fade-in">
+                        <label class="block text-sm font-bold text-slate-400 mb-2">رابط الهدف (Target URL)</label>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-grow relative group">
+                                <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors"></i>
+                                <input type="text" id="urlInput" placeholder="example.com" 
+                                    class="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pr-10 pl-4 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono text-sm shadow-inner" dir="ltr">
+                            </div>
+                            <button onclick="startUrlScan()" id="btn-scan-url" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 min-w-[140px] active:scale-95">
+                                <span>فحص</span> <i class="fas fa-radar"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Actions after fetch -->
+                        <div id="url-actions" class="hidden mt-4 pt-4 border-t border-slate-700/50 flex flex-wrap gap-3 animate-fade-in">
+                            <button onclick="viewFullSource()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">
+                                <i class="fas fa-code"></i> عرض الكود المصدري
+                            </button>
+                            <button onclick="openPreviewModal()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all border border-slate-600">
+                                <i class="fas fa-eye"></i> معاينة الصفحة (Safe Mode)
+                            </button>
+                            <span class="text-xs text-green-400 flex items-center gap-1 self-center mr-auto font-bold bg-green-900/20 px-3 py-1 rounded-full border border-green-500/30">
+                                <i class="fas fa-check-circle"></i> تم جلب البيانات
+                            </span>
+                        </div>
                     </div>
-                    <div id="preview-frame" class="bg-white text-black w-full h-[500px] overflow-y-auto p-4 rounded-b-xl">
-                        <!-- Safe HTML injected here -->
-                    </div>
-                </div>
 
-                <!-- 3. Source Code -->
-                <div id="content-source" class="hidden h-full flex flex-col">
-                    <div class="bg-c_panel p-2 flex justify-end border-b border-gray-700">
-                         <button onclick="copySource()" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded transition">
-                            <i class="fas fa-copy"></i> نسخ الكود
-                         </button>
+                    <!-- 2. Upload Section -->
+                    <div id="section-upload" class="tab-content hidden animate-fade-in">
+                        <div class="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-slate-800/30 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
+                            <input type="file" id="fileInput" class="hidden" accept=".html,.js,.txt,.php" onchange="handleFileUpload(this)">
+                            <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform border border-slate-700 group-hover:border-blue-500">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-slate-400 group-hover:text-blue-400"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-300">اضغط لرفع ملف للفحص</h3>
+                            <p class="text-sm text-slate-500 mt-2">يدعم HTML, JS, PHP, TXT</p>
+                        </div>
+                        <div id="upload-actions" class="hidden mt-4 flex justify-center">
+                            <button onclick="viewFullSource()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
+                                <i class="fas fa-code"></i> عرض الكود المحمل
+                            </button>
+                        </div>
                     </div>
-                    <textarea id="source-editor" class="w-full h-[500px] bg-[#0d0d0d] text-[#aaffaa] font-code p-4 text-sm focus:outline-none resize-none" readonly></textarea>
+
+                    <!-- 3. Paste Section -->
+                    <div id="section-paste" class="tab-content hidden animate-fade-in">
+                        <label class="block text-sm font-bold text-slate-400 mb-2">الصق الكود هنا (Raw Code)</label>
+                        <textarea id="pasteInput" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-slate-300 mono-font text-xs focus:outline-none focus:border-blue-500 resize-none selection:bg-blue-500/30" placeholder="// Paste source code here..."></textarea>
+                        <button onclick="handlePasteScan()" class="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2 rounded-xl shadow-lg w-full flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                            <span>تحليل الكود</span> <i class="fas fa-microchip"></i>
+                        </button>
+                    </div>
+
                 </div>
             </div>
-        </section>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div id="dashboard" class="grid grid-cols-1 lg:grid-cols-3 gap-6 opacity-50 pointer-events-none transition-all duration-500">
+            
+            <!-- Sidebar Stats -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">لوحة المعلومات</h3>
+                    
+                    <div id="status-card" class="bg-slate-800 border border-slate-700 p-4 rounded-xl text-center mb-4 transition-colors">
+                        <div id="status-text" class="text-slate-500 font-bold text-sm">بانتظار الإدخال...</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 text-center">
+                            <div id="itemsScanned" class="text-2xl font-black text-white">0</div>
+                            <div class="text-[10px] text-slate-500 uppercase tracking-wider">عنصر مفحوص</div>
+                        </div>
+                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800 text-center">
+                            <div id="threatsFound" class="text-2xl font-black text-slate-500">0</div>
+                            <div class="text-[10px] text-slate-500 uppercase tracking-wider">تهديد</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">نطاق الفحص</h3>
+                    <ul class="text-[11px] text-slate-400 space-y-2">
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500"></i> Auto-Download Scripts</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500"></i> Camera/Mic Hijacking</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500"></i> Telegram/Discord Exfil</li>
+                        <li class="flex items-center gap-2"><i class="fas fa-check text-blue-500"></i> Geo-Location Tracking</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Results Feed -->
+            <div id="resultsContainer" class="lg:col-span-2 space-y-4 min-h-[300px]">
+                <div class="flex flex-col items-center justify-center h-full text-slate-600 py-10">
+                    <i class="fas fa-fingerprint text-6xl mb-4 opacity-20"></i>
+                    <p class="text-sm font-bold opacity-50">أدخل البيانات لبدء التحليل الجنائي</p>
+                </div>
+            </div>
+        </div>
 
     </main>
 
+    <!-- Visual Preview Modal (iframe) -->
+    <div id="previewModal" class="modal fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div class="bg-[#1e293b] w-full max-w-5xl h-[85vh] rounded-2xl border border-slate-700 shadow-2xl flex flex-col overflow-hidden">
+            <div class="p-3 border-b border-slate-700 flex justify-between items-center bg-slate-900 px-6">
+                <h3 class="text-white font-bold flex items-center gap-2 text-sm">
+                    <i class="fas fa-eye text-blue-500"></i> معاينة آمنة (Sandbox Mode)
+                </h3>
+                <button onclick="closePreviewModal()" class="text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-red-900/50 w-8 h-8 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-grow bg-white relative">
+                <iframe id="previewFrame" class="w-full h-full border-none" sandbox="allow-same-origin"></iframe>
+            </div>
+            <div class="p-2 bg-slate-950 text-[10px] text-center text-slate-500 font-mono">
+                Security Sandbox Active: Scripts may not execute for your protection.
+            </div>
+        </div>
+    </div>
+
+    <!-- Code View Modal (Source/Script) -->
+    <div id="codeModal" class="modal fixed inset-0 z-[110] flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
+        <div class="bg-[#0f172a] w-full max-w-6xl h-[90vh] rounded-2xl border border-slate-700 shadow-2xl flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-600/20 rounded flex items-center justify-center text-blue-500">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div>
+                        <h3 id="codeModalTitle" class="text-blue-400 font-bold font-mono text-sm uppercase tracking-wider">SOURCE CODE</h3>
+                        <p class="text-[10px] text-slate-500">Raw Content Viewer</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="copyCode()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors font-bold flex items-center gap-2">
+                        <i class="fas fa-copy"></i> نسخ
+                    </button>
+                    <button onclick="closeCodeModal()" class="text-slate-400 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-900/30">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-grow overflow-auto bg-[#0b1120] p-4 custom-scrollbar relative">
+                <!-- Line Numbers (Simplified) -->
+                <pre><code id="codeModalContent" class="text-[12px] leading-relaxed font-mono text-slate-300 whitespace-pre-wrap break-all block"></code></pre>
+            </div>
+        </div>
+    </div>
     <!-- Footer -->
-    <footer class="bg-c_panel border-t border-gray-800 py-6 text-center mt-8">
-        <p class="text-gray-500 text-sm">© 2025 ABO-ELFADL MEDIA. All Rights Reserved.</p>
-        <div class="flex justify-center gap-4 mt-2">
-            <a href="#" class="text-gray-600 hover:text-c_info transition"><i class="fab fa-facebook"></i></a>
-            <a href="#" class="text-gray-600 hover:text-c_info transition"><i class="fab fa-telegram"></i></a>
-            <a href="#" class="text-gray-600 hover:text-c_info transition"><i class="fab fa-tiktok"></i></a>
+    <footer class="border-t border-slate-800 bg-slate-950 py-6 mt-12">
+        <div class="container mx-auto text-center">
+            <p class="text-slate-500 text-sm">تم التطوير بواسطة <span class="text-blue-500 font-bold">Mahmoud Abu El-Fadl</span> &copy; 2026</p>
+            <p class="text-[10px] text-slate-600 mt-1">أداة تعليمية ودفاعية للتوعية ضد الاختراقات - الاستخدام المسؤول مطلوب.</p>
         </div>
     </footer>
+    <!-- Hidden Report Area -->
+    <div id="reportArea" class="bg-[#020617] p-8 hidden text-white"></div>
 
-    <!-- Logic Script -->
     <script>
-        // --- Configuration & State ---
-        let currentMode = 'url';
-        
-        // Signatures (Translated from Python to JS Regex)
-        const RISK_SIGNATURES = [
-            { pattern: /api\.telegram\.org/g, desc: '🚨 اتصال بسيرفر تليجرام (احتمال سرقة بيانات)' },
-            { pattern: /bot[0-9]+:[a-zA-Z0-9_-]+/g, desc: '🤖 توكن بوت تليجرام مكشوف' },
-            { pattern: /getUserMedia/g, desc: '📸 محاولة فتح الكاميرا/المايك' },
-            { pattern: /geolocation/g, desc: '📍 طلب تحديد الموقع الجغرافي (GPS)' },
-            { pattern: /clipboard/g, desc: '📋 محاولة الوصول للحافظة (Clipboard)' },
-            { pattern: /ipapi/g, desc: '🌍 خدمات تتبع الـ IP' },
-            { pattern: /AndroidInterface/g, desc: '📱 ثغرة WebView (Android Bridge)' },
-            { pattern: /atob\(/g, desc: '⚠️ دالة فك تشفير Base64 (قد تستخدم لإخفاء أكواد)' },
-            { pattern: /eval\(/g, desc: '⚠️ دالة Eval (تنفيذ أكواد عشوائية خطيرة)' },
-            { pattern: /document\.cookie/g, desc: '🍪 محاولة قراءة ملفات الكوكيز' },
-            { pattern: /<input[^>]*type=['"]?password['"]?/g, desc: '🔑 حقل إدخال كلمة مرور (صفحة تصيد محتملة)' }
+        // --- UI Utils: Toast System ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+            if(type === 'info') icon = 'fa-circle-info';
+
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${icon} text-lg"></i>
+                <span class="text-sm font-bold">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- State Management ---
+        let fetchedHtmlContent = "";
+        let currentTarget = "Unknown";
+        let currentThreats = []; // Store detailed threats for modal view
+
+        // --- Threat Database ---
+        const PATTERNS = [
+            { id: 'telegram', regex: /api\.telegram\.org\/(bot|send)|chat_id=|token=/i, name: 'تهريب لـ Telegram', risk: 'CRITICAL', icon: 'fa-paper-plane', desc: 'محاولة لإرسال بيانات مسروقة إلى بوت تيليجرام.' },
+            { id: 'discord', regex: /discord\.com\/api\/webhooks/i, name: 'تهريب لـ Discord', risk: 'CRITICAL', icon: 'fa-brands fa-discord', desc: 'إرسال بيانات إلى Webhook ديسكورد.' },
+            { id: 'camera', regex: /getUserMedia.*video|webkitGetUserMedia/i, name: 'اختراق الكاميرا', risk: 'CRITICAL', icon: 'fa-camera', desc: 'طلب إذن لفتح الكاميرا والتقاط صور.' },
+            { id: 'mic', regex: /getUserMedia.*audio|AudioContext/i, name: 'اختراق المايك', risk: 'HIGH', icon: 'fa-microphone', desc: 'طلب إذن لتسجيل الصوت.' },
+            { id: 'location', regex: /geolocation\.getCurrentPosition/i, name: 'تحديد الموقع', risk: 'HIGH', icon: 'fa-map-marker-alt', desc: 'طلب تحديد إحداثيات GPS بدقة.' },
+            { id: 'download', regex: /download\s*=|createElement\(['"]a['"]\)|window\.location.*(\.exe|\.apk|\.zip)/i, name: 'تحميل قسري (Auto-DL)', risk: 'MEDIUM', icon: 'fa-download', desc: 'محاولة لتنزيل ملفات مشبوهة تلقائياً.' },
+            { id: 'keylogger', regex: /addEventListener\(['"]k(eydown|eyup|eypress)['"]/i, name: 'تسجيل ضغطات (Keylogger)', risk: 'MEDIUM', icon: 'fa-keyboard', desc: 'مراقبة لوحة المفاتيح لسرقة ما تكتبه.' },
+            { id: 'phishing', regex: /input.*password|type=['"]password['"]/i, name: 'حقل كلمة مرور', risk: 'INFO', icon: 'fa-key', desc: 'وجود حقول إدخال كلمات مرور (قد تكون صفحة تصيد).' }
         ];
 
-        // --- UI Functions ---
-
-        function toggleInputMode(mode) {
-            currentMode = mode;
-            const urlContainer = document.getElementById('input-url-container');
-            const codeContainer = document.getElementById('input-code-container');
-            const btnUrl = document.getElementById('btn-mode-url');
-            const btnCode = document.getElementById('btn-mode-code');
-
-            if (mode === 'url') {
-                urlContainer.classList.remove('hidden');
-                codeContainer.classList.add('hidden');
-                btnUrl.className = "px-4 py-2 rounded text-sm font-bold bg-c_info text-white transition";
-                btnCode.className = "px-4 py-2 rounded text-sm font-bold text-gray-400 hover:text-white transition";
-            } else {
-                urlContainer.classList.add('hidden');
-                codeContainer.classList.remove('hidden');
-                btnCode.className = "px-4 py-2 rounded text-sm font-bold bg-c_info text-white transition";
-                btnUrl.className = "px-4 py-2 rounded text-sm font-bold text-gray-400 hover:text-white transition";
-            }
-        }
-
-        function switchTab(tabName) {
-            // Buttons styling
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-c_info', 'text-white');
-                btn.classList.add('text-gray-400');
-            });
-            const activeBtn = document.getElementById(`tab-${tabName}`);
-            activeBtn.classList.add('active');
-            activeBtn.classList.remove('text-gray-400');
-
-            // Content visibility
-            ['scan', 'preview', 'source'].forEach(t => {
-                document.getElementById(`content-${t}`).classList.add('hidden');
-            });
-            document.getElementById(`content-${tabName}`).classList.remove('hidden');
-        }
-
-        async function startProcess() {
-            const reportDiv = document.getElementById('report-output');
-            const resultsArea = document.getElementById('resultsArea');
-            const scanBtn = document.getElementById('scanBtn');
+        // --- Tab Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
-            // Reset UI
-            reportDiv.innerHTML = '<div class="text-c_info animate-pulse">⏳ جاري تحليل البيانات...</div>';
-            resultsArea.classList.remove('hidden');
-            switchTab('scan');
-            scanBtn.disabled = true;
-            scanBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري العمل...';
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            
+            resetDashboard();
+        }
 
-            let htmlContent = "";
+        function resetDashboard() {
+            document.getElementById('dashboard').classList.add('opacity-50', 'pointer-events-none');
+            document.getElementById('url-actions').classList.add('hidden');
+            document.getElementById('upload-actions').classList.add('hidden');
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-slate-600 py-10">
+                    <i class="fas fa-fingerprint text-6xl mb-4 opacity-20"></i>
+                    <p class="text-sm font-bold opacity-50">أدخل البيانات لبدء التحليل الجنائي</p>
+                </div>
+            `;
+            updateStatus('idle');
+            fetchedHtmlContent = "";
+            currentThreats = [];
+        }
+
+        // --- 1. URL Scan Logic ---
+        async function startUrlScan() {
+            let url = document.getElementById('urlInput').value.trim();
+            
+            if (!url) {
+                return showToast('الرجاء إدخال رابط للبدء', 'error');
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+                document.getElementById('urlInput').value = url;
+            }
+            
+            currentTarget = url;
+            setLoading(true, 'btn-scan-url');
 
             try {
-                if (currentMode === 'url') {
-                    let url = document.getElementById('urlInput').value.trim();
-                    if (!url) throw new Error("يرجى إدخال رابط صحيح.");
-                    if (!url.startsWith('http')) url = 'https://' + url;
-
-                    // Fetch using a CORS proxy (Using allorigins for demo stability)
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    
-                    reportDiv.innerHTML += `<div class="text-gray-500 mb-2">📡 جاري الاتصال بـ: ${url} عبر البروكسي...</div>`;
-                    
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error("فشل الاتصال بالرابط.");
-                    const data = await response.json();
-                    htmlContent = data.contents;
-                    
-                    if(!htmlContent) throw new Error("لم يتم استلام أي محتوى. قد يكون الموقع محمي ضد البروكسي.");
-
-                } else {
-                    htmlContent = document.getElementById('codeInput').value;
-                    if (!htmlContent.trim()) throw new Error("يرجى لصق الكود المصدري.");
-                }
-
-                // Run Analysis
-                analyzeMalware(htmlContent);
-                buildSafePreview(htmlContent);
-                document.getElementById('source-editor').value = htmlContent;
-
-            } catch (error) {
-                reportDiv.innerHTML += `<div class="text-c_danger font-bold mt-4">❌ خطأ: ${error.message}</div>`;
-                if(currentMode === 'url') {
-                    reportDiv.innerHTML += `<div class="text-gray-400 text-xs mt-2">نصيحة: بعض المواقع تمنع الوصول الآلي. جرب فتح الموقع في متصفح خارجي، اضغط Ctrl+U لنسخ الكود، واستخدم وضع "كود المصدر".</div>`;
-                }
-            } finally {
-                scanBtn.disabled = false;
-                scanBtn.innerHTML = '<i class="fas fa-search"></i> فحص ومعاينة';
-            }
-        }
-
-        // --- Core Logic ---
-
-        function analyzeMalware(html) {
-            const reportDiv = document.getElementById('report-output');
-            reportDiv.innerHTML = ''; // Clear loading
-            
-            reportDiv.innerHTML += `<div class="text-yellow-400 mb-4 font-bold border-b border-gray-700 pb-2">[*] بدء الفحص الشامل...</div>`;
-            
-            let foundRisks = 0;
-            const lines = html.split('\n');
-
-            RISK_SIGNATURES.forEach(sig => {
-                // Reset regex matching index
-                sig.pattern.lastIndex = 0; 
+                const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 
-                const matches = [...html.matchAll(sig.pattern)];
-                if (matches.length > 0) {
-                    foundRisks += matches.length;
-                    reportDiv.innerHTML += `<div class="mt-4 text-c_danger font-bold bg-[#330000] p-2 rounded border-l-4 border-c_danger">
-                        [!] تهديد مكتشف: ${sig.desc}
-                    </div>`;
-
-                    matches.forEach(match => {
-                        // Find line number (approximate)
-                        const preMatch = html.substring(0, match.index);
-                        const lineNo = preMatch.split('\n').length;
-                        
-                        // Get context
-                        const contextStart = Math.max(0, lineNo - 2);
-                        const contextEnd = Math.min(lines.length, lineNo + 2);
-                        let contextCode = lines.slice(contextStart, contextEnd).join('\n');
-                        
-                        // Escape HTML tags for display
-                        contextCode = contextCode.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                        
-                        // Highlight the specific match text logic would go here, simplified for now:
-                        reportDiv.innerHTML += `
-                            <div class="ml-4 mt-2 text-gray-400 text-xs">🔻 السطر التقريبي ${lineNo}:</div>
-                            <div class="ml-4 bg-[#111] p-2 rounded text-gray-300 font-mono text-xs overflow-x-auto border-l-2 border-yellow-600">
-                                ${contextCode}
-                            </div>
-                        `;
-                    });
+                showToast('جاري الاتصال بالهدف...', 'info');
+                
+                const response = await fetch(proxy);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                
+                fetchedHtmlContent = await response.text();
+                
+                if(!fetchedHtmlContent || fetchedHtmlContent.length < 10) {
+                     throw new Error('Empty response received');
                 }
-            });
 
-            // Summary
-            const badge = document.getElementById('risk-badge');
-            badge.classList.remove('hidden', 'bg-c_danger', 'bg-c_accent', 'text-white', 'text-black');
-            
-            if (foundRisks === 0) {
-                reportDiv.innerHTML += `<div class="mt-6 text-c_accent text-lg font-bold text-center border-t border-gray-700 pt-4">
-                    <i class="fas fa-check-circle"></i> الكود نظيف من التهديدات المعروفة.
-                </div>`;
-                badge.innerText = "✅ آمن (Clean)";
-                badge.classList.add('bg-c_accent', 'text-black');
-            } else {
-                reportDiv.innerHTML += `<div class="mt-6 text-c_danger text-lg font-bold text-center border-t border-gray-700 pt-4 animate-pulse">
-                    <i class="fas fa-exclamation-triangle"></i> تم اكتشاف ${foundRisks} تهديد أمني!
-                </div>`;
-                badge.innerText = `🛑 خطر (${foundRisks})`;
-                badge.classList.add('bg-c_danger', 'text-white');
+                showToast('تم جلب الكود المصدري بنجاح', 'success');
+                
+                document.getElementById('url-actions').classList.remove('hidden');
+                
+                analyzeContent(fetchedHtmlContent, 'html');
+
+            } catch (err) {
+                console.error(err);
+                showToast('فشل الاتصال: قد يكون الموقع محمي أو غير متاح', 'error');
+                resetDashboard();
+            } finally {
+                setLoading(false, 'btn-scan-url');
             }
         }
 
-        function buildSafePreview(html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
+        // --- 2. File Upload Logic ---
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                return showToast('الملف كبير جداً (الحد الأقصى 2MB)', 'error');
+            }
+
+            currentTarget = file.name;
+            const reader = new FileReader();
             
-            // Extraction Info
-            const title = doc.title || "لا يوجد عنوان";
-            document.getElementById('preview-meta').innerText = `العنوان: ${title}`;
+            reader.onload = (e) => {
+                fetchedHtmlContent = e.target.result; // Store for "View Source"
+                const type = file.name.endsWith('.js') ? 'js' : 'html';
+                
+                document.getElementById('upload-actions').classList.remove('hidden'); // Show View Source button
+                showToast('تم تحميل الملف، جاري الفحص...', 'success');
+                analyzeContent(fetchedHtmlContent, type);
+            };
+            
+            reader.readAsText(file);
+            input.value = ''; 
+        }
 
-            // Sanitization (Remove Dangerous Elements)
-            const elementsToRemove = ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta'];
-            elementsToRemove.forEach(tag => {
-                doc.querySelectorAll(tag).forEach(el => el.remove());
-            });
+        // --- 3. Paste Logic ---
+        function handlePasteScan() {
+            const code = document.getElementById('pasteInput').value;
+            if (!code.trim()) return showToast('حقل الكود فارغ!', 'error');
+            
+            fetchedHtmlContent = code; // Store
+            currentTarget = "Raw Code Snippet";
+            showToast('جاري تحليل الكود المدخل...', 'info');
+            
+            const type = code.includes('<html') || code.includes('<script') ? 'html' : 'js';
+            analyzeContent(code, type);
+        }
 
-            // Remove Event Handlers (on*)
-            const allElements = doc.querySelectorAll('*');
-            allElements.forEach(el => {
-                Array.from(el.attributes).forEach(attr => {
-                    if (attr.name.startsWith('on')) {
-                        el.removeAttribute(attr.name);
+        // --- Analysis Engine ---
+        function analyzeContent(content, type) {
+            const dash = document.getElementById('dashboard');
+            dash.classList.remove('opacity-50', 'pointer-events-none');
+            
+            let itemsToScan = [];
+            currentThreats = []; // Reset
+            
+            if (type === 'html') {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(content, 'text/html');
+                const scripts = doc.querySelectorAll('script');
+                
+                scripts.forEach((s, i) => {
+                    if (s.innerHTML.trim()) {
+                         itemsToScan.push({ text: s.innerHTML, fullText: s.innerHTML, index: i, type: 'Inline Script' });
+                    }
+                    if (s.src) {
+                        itemsToScan.push({ text: s.src, fullText: s.outerHTML, index: i, type: 'External Source' });
                     }
                 });
-                // Disable links for safety
-                if(el.tagName === 'A') {
-                    el.href = "javascript:void(0)";
-                    el.style.cursor = "not-allowed";
-                    el.title = "تم تعطيل الرابط للمعاينة الآمنة";
-                }
+
+                const bodyContent = doc.body ? doc.body.innerHTML : "";
+                if(bodyContent) itemsToScan.push({ text: bodyContent, fullText: bodyContent, index: 999, type: 'Body Content' });
+
+            } else {
+                itemsToScan.push({ text: content, fullText: content, index: 0, type: 'Raw Code' });
+            }
+
+            itemsToScan.forEach(item => {
+                PATTERNS.forEach(pat => {
+                    if (pat.regex.test(item.text)) {
+                        const isDuplicate = currentThreats.some(t => t.pattern.id === pat.id && t.sourceIndex === item.index);
+                        if (!isDuplicate) {
+                            currentThreats.push({
+                                pattern: pat,
+                                snippet: extractSnippet(item.text, pat.regex),
+                                fullPayload: item.fullText, // Store the FULL malicous script
+                                sourceIndex: item.index,
+                                sourceType: item.type
+                            });
+                        }
+                    }
+                });
             });
 
-            const cleanHTML = doc.body.innerHTML;
-            document.getElementById('preview-frame').innerHTML = cleanHTML || '<div class="text-center text-gray-500 mt-10">لا يوجد محتوى قابل للعرض بعد التنظيف.</div>';
+            renderResults(currentThreats, itemsToScan.length);
         }
 
-        function copySource() {
-            const copyText = document.getElementById("source-editor");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999); 
-            navigator.clipboard.writeText(copyText.value);
-            alert("تم نسخ الكود المصدري!");
+        function extractSnippet(text, regex) {
+            const match = text.match(regex);
+            if (!match) return "Match found in external reference";
+            const start = Math.max(0, match.index - 40);
+            const end = Math.min(text.length, match.index + match[0].length + 60);
+            return text.substring(start, end);
         }
 
+        // --- Rendering Results ---
+        function renderResults(threats, scannedCount) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            
+            animateValue("itemsScanned", 0, scannedCount, 1000);
+            animateValue("threatsFound", 0, threats.length, 1000);
+
+            if (threats.length === 0) {
+                updateStatus('clean');
+                container.innerHTML = `
+                    <div class="glass-panel p-8 text-center border border-green-500/30 bg-green-900/10 rounded-2xl animate-fade-in">
+                        <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+                            <i class="fas fa-shield-check text-4xl text-green-500"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-green-400">النظام نظيف</h2>
+                        <p class="text-slate-400 mt-2 text-sm">لم يتم العثور على تهديدات معروفة في العناصر التي تم فحصها.</p>
+                        <div class="mt-4">
+                            <button onclick="viewFullSource()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg border border-slate-700 transition-colors">
+                                <i class="fas fa-code"></i> عرض الكود المصدري الكامل
+                            </button>
+                        </div>
+                    </div>`;
+            } else {
+                updateStatus('danger');
+                threats.forEach((t, index) => {
+                    const card = document.createElement('div');
+                    card.className = `glass-panel p-4 rounded-xl border-r-4 ${t.pattern.risk === 'CRITICAL' ? 'border-red-500 bg-red-900/10' : 'border-yellow-500 bg-yellow-900/10'} mb-3 opacity-0`;
+                    card.style.animation = `slideIn 0.3s ease-out forwards ${index * 0.1}s`;
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center">
+                                    <i class="fas ${t.pattern.icon} text-sm ${t.pattern.risk === 'CRITICAL' ? 'text-red-400' : 'text-yellow-400'}"></i>
+                                </div>
+                                <div>
+                                    <span class="block font-bold text-slate-200 text-sm">${t.pattern.name}</span>
+                                    <span class="text-[10px] text-slate-500">Found in: ${t.sourceType}</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-900 border border-slate-700 ${t.pattern.risk === 'CRITICAL' ? 'text-red-400' : 'text-yellow-400'}">${t.pattern.risk}</span>
+                        </div>
+                        
+                        <p class="text-xs text-slate-400 mb-3 pl-11 border-l-2 border-slate-800 ml-3">${t.pattern.desc}</p>
+                        
+                        <div class="code-preview p-3 text-[11px] mono-font text-green-400 overflow-x-auto border border-slate-800 bg-black/50 rounded mb-3">
+                            <code>${t.snippet.replace(/</g, '&lt;')}...</code>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button onclick="viewThreatScript(${index})" class="text-[10px] bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
+                                <i class="fas fa-bug"></i> فحص السكريبت المسؤول بالكامل
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        // --- Code Viewers (New Features) ---
+        
+        // 1. View Complete Source
+        function viewFullSource() {
+            if(!fetchedHtmlContent) return showToast('لا يوجد كود لعرضه', 'error');
+            openCodeModal('COMPLETE SOURCE CODE', fetchedHtmlContent);
+        }
+
+        // 2. View Specific Threat Payload
+        function viewThreatScript(index) {
+            const threat = currentThreats[index];
+            if(!threat) return;
+            openCodeModal(`MALICIOUS PAYLOAD: ${threat.pattern.name.toUpperCase()}`, threat.fullPayload);
+        }
+
+        function openCodeModal(title, content) {
+            document.getElementById('codeModalTitle').innerText = title;
+            document.getElementById('codeModalContent').innerText = content;
+            document.getElementById('codeModal').classList.add('open');
+        }
+
+        function closeCodeModal() {
+            document.getElementById('codeModal').classList.remove('open');
+        }
+
+        function copyCode() {
+            const content = document.getElementById('codeModalContent').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                showToast('تم نسخ الكود للحافظة', 'success');
+            });
+        }
+
+        // --- Visual Preview ---
+        function openPreviewModal() {
+            if (!fetchedHtmlContent) return showToast('لا يوجد محتوى للعرض', 'error');
+            
+            const modal = document.getElementById('previewModal');
+            const iframe = document.getElementById('previewFrame');
+            
+            const blob = new Blob([fetchedHtmlContent], { type: 'text/html' });
+            iframe.src = URL.createObjectURL(blob);
+            
+            modal.classList.add('open');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.remove('open');
+            setTimeout(() => { document.getElementById('previewFrame').src = ''; }, 300);
+        }
+
+        // --- Helpers ---
+        function setLoading(isLoading, btnId) {
+            const btn = document.getElementById(btnId);
+            if (isLoading) {
+                btn.disabled = true;
+                btn.dataset.originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الفحص...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.originalText;
+            }
+        }
+
+        function updateStatus(state) {
+            const el = document.getElementById('status-card');
+            const txt = document.getElementById('status-text');
+            
+            if (state === 'clean') {
+                el.className = 'bg-green-900/20 border border-green-500/50 p-4 rounded-xl text-center mb-4 transition-all';
+                txt.innerHTML = '<span class="text-green-400"><i class="fas fa-check-circle"></i> آمن (SECURE)</span>';
+            } else if (state === 'danger') {
+                el.className = 'bg-red-900/20 border border-red-500/50 p-4 rounded-xl text-center mb-4 animate-pulse transition-all';
+                txt.innerHTML = '<span class="text-red-400"><i class="fas fa-radiation"></i> تهديدات مكتشفة</span>';
+            } else {
+                el.className = 'bg-slate-800 border border-slate-700 p-4 rounded-xl text-center mb-4 transition-all';
+                txt.innerHTML = '<span class="text-slate-500">بانتظار الإدخال...</span>';
+            }
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            const obj = document.getElementById(id);
+            const timer = setInterval(function() {
+                current += increment;
+                obj.innerHTML = current;
+                if (current == end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        // --- Export ---
+        function exportReport(type) {
+            const dashboard = document.getElementById('dashboard');
+            if (dashboard.classList.contains('opacity-50')) return showToast('قم بإجراء فحص أولاً لتصدير التقرير', 'error');
+            
+            const area = document.getElementById('reportArea');
+            area.style.display = 'block';
+            
+            // Build simple report HTML
+            const date = new Date().toLocaleString();
+            area.innerHTML = `
+                <div style="text-align:center; padding: 20px; background: #0f172a; color: white; border-bottom: 2px solid #3b82f6;">
+                    <h1 style="font-size: 24px; font-weight: bold; color: #3b82f6;">ABOELFADL SECURITY REPORT</h1>
+                    <p style="color: #94a3b8; font-size: 12px; margin-top: 5px;">TARGET: ${currentTarget}</p>
+                    <p style="color: #64748b; font-size: 10px;">GENERATED: ${date}</p>
+                </div>
+                <div style="padding: 20px; background: #020617;">
+                    ${document.getElementById('resultsContainer').innerHTML}
+                </div>
+            `;
+
+            showToast('جاري تحضير التقرير...', 'info');
+
+            if (type === 'png') {
+                html2canvas(area, { backgroundColor: '#020617', scale: 2 }).then(canvas => {
+                    const a = document.createElement('a');
+                    a.download = `AboElfadl_Scan_${Date.now()}.png`;
+                    a.href = canvas.toDataURL();
+                    a.click();
+                    area.style.display = 'none';
+                    showToast('تم تحميل الصورة بنجاح', 'success');
+                });
+            } else {
+                html2canvas(area, { backgroundColor: '#020617', scale: 2 }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const width = pdf.internal.pageSize.getWidth();
+                    const height = (canvas.height * width) / canvas.width;
+                    pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+                    pdf.save(`AboElfadl_Scan_${Date.now()}.pdf`);
+                    area.style.display = 'none';
+                    showToast('تم تحميل PDF بنجاح', 'success');
+                });
+            }
+        }
     </script>
 </body>
 </html>
